@@ -9,8 +9,8 @@ public class Coin : MonoBehaviour {
         ++Coin.coinCount;
     }
 
-    private void OnTriggerEnter(Collider collider) {
-        if ( collider.CompareTag("Player")) {
+    private void OnTriggerEnter(Collider col) {
+        if (col.CompareTag("Player")) {
             Destroy(gameObject);
         }
     }
@@ -18,7 +18,13 @@ public class Coin : MonoBehaviour {
     private void OnDestroy() {
         --Coin.coinCount;
         if (Coin.coinCount <= 0) {
-
+            //game won destroy timer and launch fireworks
+            GameObject timer = GameObject.Find("LevelTimer");
+            Destroy(timer);
+            GameObject[] fireworkSystems = GameObject.FindGameObjectsWithTag("Fireworks");
+            foreach (GameObject go in fireworkSystems) {
+                go.GetComponent<ParticleSystem>().Play();
+            }
         }
     }
 
