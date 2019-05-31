@@ -185,7 +185,7 @@ Camera:
   m_TargetEye: 3
   m_HDR: 1
   m_AllowMSAA: 1
-  m_AllowDynamicResolution: 0
+  m_AllowDynamicResolution: 1
   m_ForceIntoRT: 0
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
@@ -216,7 +216,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ed945d39376c4765b03cc5eac4d3f5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  curShader: {fileID: 4800000, guid: ae6f9cb6780714cb6a54daf23076d473, type: 3}
+  curShader: {fileID: 4800000, guid: a5b1fc4e7bf6d4630849f4fcb446f8ce, type: 3}
   blendTexture: {fileID: 2800000, guid: 19f4edcdf2a3549a68078e662606de8b, type: 3}
   blendOpacity: 1
 --- !u!1 &1391668941
