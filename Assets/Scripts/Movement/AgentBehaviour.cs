@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 
 public class AgentBehaviour : MonoBehaviour {
+    public float weight = 1.0f;
+    public int priority = 1;
     public GameObject target;
     protected Agent agent;
 
@@ -9,7 +11,7 @@ public class AgentBehaviour : MonoBehaviour {
     }
 
     public virtual void Update() {
-        agent.SetSteering(GetSteering());
+        agent.SetSteering(GetSteering(), priority);
     }
 
     public virtual Steering GetSteering() {

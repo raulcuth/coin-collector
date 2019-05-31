@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Agent : MonoBehaviour {
     public float maxSpeed;
@@ -8,17 +9,25 @@ public class Agent : MonoBehaviour {
     public float orientation;
     public float rotation;
     public Vector3 velocity;
+    public float priorityThreshold = 0.2f;
     protected Steering steering;
+    private Dictionary<int, List<Steering>> groups;
     private Rigidbody aRigidBody;
 
     private void Start() {
         velocity = Vector3.zero;
         steering = new Steering();
         aRigidBody = GetComponent<Rigidbody>();
+        groups = new Dictionary<int, List<Steering>>();
     }
 
-    public void SetSteering(Steering steering) {
-        this.steering = steering;
+    public void SetSteering(Steering steering, int priority) {
+        //this.steering.linear += (weight * steering.linear);
+        //this.steering.angular += (weight * steering.angular);
+        if (!groups.ContainsKey(priority)) {
+            groups.Add(priority, new List<Steering>());
+        }
+        groups[priority].Add(steering);
     }
 
     public virtual void Update() {
@@ -40,6 +49,9 @@ public class Agent : MonoBehaviour {
     }
 
     public virtual void LateUpdate() {
+        //funnelled steering through priorities
+        steering = GetPrioritySteering();
+        groups.Clear();
         velocity += steering.linear * Time.deltaTime;
         rotation += steering.angular * Time.deltaTime;
         if (velocity.magnitude > maxSpeed) {
@@ -79,5 +91,23 @@ public class Agent : MonoBehaviour {
         vector.x = Mathf.Sin(orientation * Mathf.Deg2Rad) * 1.0f;
         vector.z = Mathf.Cos(orientation * Mathf.Deg2Rad) * 1.0f;
         return vector.normalized;
+    }
+
+    private Steering GetPrioritySteering() {
+        Steering steering = new Steering();
+        float sqrThreshold = priorityThreshold * priorityThreshold;
+
+        foreach (List<Steering> group in groups.Values) {
+            steering = new Steering();
+            foreach (Steering singleSteering in group) {
+                steering.linear += singleSteering.linear;
+                steering.angular += singleSteering.angular;
+            }
+            if (steering.linear.sqrMagnitude > sqrThreshold ||
+                    Mathf.Abs(steering.angular) > priorityThreshold) {
+                return steering;
+            }
+        }
+        return steering;
     }
 }
