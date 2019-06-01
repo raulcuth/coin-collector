@@ -28,4 +28,42 @@ public class Projectile : MonoBehaviour {
         transform.position = firePos;
         set = true;
     }
+
+    public float GetLandingTime(float height = 0.0f) {
+        Vector3 position = transform.position;
+        float time = 0.0f;
+
+        float valueInt = direction.y * direction.y * (speed * speed);
+        valueInt = valueInt - (Physics.gravity.y * 2 * (position.y - height));
+        valueInt = Mathf.Sqrt(valueInt);
+        float valueAdd = (-direction.y) * speed;
+        float valueSub = (-direction.y) * speed;
+        valueAdd = (valueAdd + valueInt) / Physics.gravity.y;
+        valueSub = (valueSub - valueInt) / Physics.gravity.y;
+
+        if (float.IsNaN(valueAdd) && !float.IsNaN(valueSub)) {
+            return valueSub;
+        }
+        if (!float.IsNaN(valueAdd) && float.IsNaN(valueSub)) {
+            return valueAdd;
+        }
+        if (float.IsNaN(valueAdd) && float.IsNaN(valueSub)) {
+            return -1.0f;
+        }
+
+        time = Mathf.Max(valueAdd, valueSub);
+        return time;
+    }
+
+    public Vector3 GetLandingPos(float height = 0.0f) {
+        Vector3 landingPos = Vector3.zero;
+        float time = GetLandingTime();
+        if (time < 0.0f) {
+            return landingPos;
+        }
+        landingPos.y = height;
+        landingPos.x = firePos.x + direction.x * speed * time;
+        landingPos.z = firePos.z + direction.z * speed * time;
+        return landingPos;
+    }
 }
