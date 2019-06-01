@@ -66,4 +66,43 @@ public class Projectile : MonoBehaviour {
         landingPos.z = firePos.z + direction.z * speed * time;
         return landingPos;
     }
+
+    public static Vector3 GetFireDirection(Vector3 startPos, Vector3 endPos, float speed, bool isWall) {
+        //solve the quadratic equation
+        Vector3 direction = Vector3.zero;
+        Vector3 delta = endPos - startPos;
+        float a = Vector3.Dot(Physics.gravity, Physics.gravity);
+        float b = -4 * (Vector3.Dot(Physics.gravity, delta) + speed * speed);
+        float c = 4 * Vector3.Dot(delta, delta);
+
+        if (4 * a * c > b * b) {
+            return direction;
+        }
+        float time0 = Mathf.Sqrt((-b + Mathf.Sqrt(b * b - 4 * a * c)) / (2 * a));
+        float time1 = Mathf.Sqrt((-b - Mathf.Sqrt(b * b - 4 * a * c)) / (2 * a));
+        //end quadratic equation
+
+        //if shooting the projectile is feasible given the parameters,
+        //return a non-zero direction vector
+        float time;
+        if (time0 < 0.0f) {
+            if (time1 < 0) {
+                return direction;
+            }
+            time = time1;
+        } else {
+            if (time1 < 0) {
+                time = time0;
+            } else {
+                if (isWall) {
+                    time = Mathf.Max(time0, time1);
+                } else {
+                    time = Mathf.Min(time0, time1);
+                }
+            }
+        }
+        direction = 2 * delta - Physics.gravity * (time * time);
+        direction = direction / (2 * speed * time);
+        return direction;
+    }
 }
