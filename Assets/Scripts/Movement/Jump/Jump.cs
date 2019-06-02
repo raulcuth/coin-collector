@@ -10,6 +10,23 @@ public class Jump : VelocityMatch {
         jumpPoint = new JumpPoint(jumpPad.position, landingPad.position);
     }
 
+    public override Steering GetSteering() {
+        Steering steering = new Steering();
+        if(target == null) {
+            CalculateTarget();
+        }
+        if(!canAchieve) {
+            return steering;
+        }
+        //check if we have hit the jump point
+        if (Mathf.Approximately((transform.position - target.transform.position).magnitude, 0f) &&
+            Mathf.Approximately((agent.velocity - target.GetComponent<Agent>().velocity).magnitude, 0f)) {
+            //call a jump method based on the Projectile behaviour
+            return steering;
+        }
+        return base.GetSteering();
+    }
+
     protected void CalculateTarget() {
         target = new GameObject();
         target.AddComponent<Agent>();
