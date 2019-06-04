@@ -65,6 +65,40 @@ public class Graph : MonoBehaviour {
         return edges;
     }
 
+    public List<Vertex> GetPathBFS(GameObject srcObj, GameObject dstObj) {
+        if (srcObj == null || dstObj == null) {
+            return new List<Vertex>();
+        }
+        Vertex[] bfsNeighbours;
+        Queue<Vertex> q = new Queue<Vertex>();
+        Vertex src = GetNearestVertex(srcObj.transform.position);
+        Vertex dst = GetNearestVertex(dstObj.transform.position);
+        Vertex v;
+        int[] previous = new int[vertices.Count];
+        for (int i = 0; i < previous.Length; i++) {
+            previous[i] = -1;
+        }
+        previous[src.id] = src.id;
+        q.Enqueue(src);
+
+        //implement the BFS algorithm for finding a path
+        while (q.Count != 0) {
+            v = q.Dequeue();
+            if (ReferenceEquals(v, dst)) {
+                return BuildPath(src.id, v.id, ref previous);
+            }
+            bfsNeighbours = GetNeighbours(v);
+            foreach (Vertex n in bfsNeighbours) {
+                if (previous[n.id] != -1) {
+                    continue;
+                }
+                previous[n.id] = v.id;
+                q.Enqueue(n);
+            }
+        }
+        return new List<Vertex>();
+    }
+
     public List<Vertex> GetPathDFS(GameObject srcObj, GameObject dstObj) {
         if (srcObj == null || dstObj == null) {
             return new List<Vertex>();
