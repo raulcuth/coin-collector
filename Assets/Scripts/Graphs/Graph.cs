@@ -401,6 +401,59 @@ public class Graph : MonoBehaviour {
         yield break;
     }
 
+    //We create a new path, taking the initial node as a starting point, and apply 
+    //ray casting to the next node in the path until we get a collision with
+    //wall between our current node and the target node.When that happens, we 
+    //take the last clear node, put it in the new path, and set it as the 
+    //current node to start casting rays again.The process continues until there 
+    //are no nodes left to check and the current node is the target node.
+    //That way, we build a more intuitive path.
+    public List<Vertex> Smooth(List<Vertex> path) {
+        List<Vertex> newPath = new List<Vertex>();
+        //check whether it is worth computing a new path
+        if (path.Count == 0) {
+            return newPath;
+        }
+        if (path.Count < 3) {
+            return path;
+        }
+
+        //implement the loop for traversing the list and building the new path
+        newPath.Add(path[0]);
+        int i, j;
+        for (i = 0; i < path.Count - 1;) {
+            for (j = i + 1; j < path.Count; j++) {
+                //variables used by the ray casting function
+                Vector3 origin = path[i].transform.position;
+                Vector3 destination = path[j].transform.position;
+                Vector3 direction = destination - origin;
+                float distance = direction.magnitude;
+                bool isWall = false;
+                direction.Normalize();
+
+                //cast a ray from the current starting node to the next one
+                Ray ray = new Ray(origin, direction);
+                RaycastHit[] hits;
+                hits = Physics.RaycastAll(ray, distance);
+
+                //check whether there is a wall and break the loop accordingly
+                foreach (RaycastHit hit in hits) {
+                    string tag = hit.collider.gameObject.tag;
+                    if (tag.Equals("Wall")) {
+                        isWall = true;
+                        break;
+                    }
+                }
+                if (isWall) {
+                    break;
+                }
+            }
+            i = j - 1;
+            newPath.Add(path[i]);
+        }
+        return newPath;
+    }
+
     private List<Vertex> BuildPath(int srcId, int dstId, ref int[] prevList) {
         List<Vertex> path = new List<Vertex>();
         int prev = dstId;
