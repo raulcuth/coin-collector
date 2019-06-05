@@ -10,6 +10,8 @@ public class Graph : MonoBehaviour {
     protected List<List<float>> costs;
     protected Dictionary<int, int> instIdToId;
     public delegate float Heuristic(Vertex a, Vertex b);
+    public List<Vertex> path;
+    public bool isFinished;
 
     public virtual void Start() {
         Load();
@@ -331,6 +333,72 @@ public class Graph : MonoBehaviour {
         Vector3 posA = a.transform.position;
         Vector3 posB = b.transform.position;
         return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
+    }
+
+    public IEnumerator GetPathInFrames(GameObject srcObj, GameObject dstObj, Heuristic h = null) {
+        isFinished = false;
+        path = new List<Vertex>();
+        if (srcObj == null || dstObj == null) {
+            path = new List<Vertex>();
+            isFinished = true;
+            yield break;
+        }
+
+        if (ReferenceEquals(h, null)) {
+            h = EuclidDist;
+        }
+
+        Vertex src = GetNearestVertex(srcObj.transform.position);
+        Vertex dst = GetNearestVertex(dstObj.transform.position);
+        BinaryHeap<Edge> frontier = new BinaryHeap<Edge>();
+
+        Edge[] edges;
+        Edge node, child;
+        int size = vertices.Count;
+        float[] distValue = new float[size];
+        int[] previous = new int[size];
+        node = new Edge(src, 0);
+        frontier.Add(node);
+        distValue[src.id] = 0;
+        previous[src.id] = src.id;
+
+        for (int i = 0; i < size; i++) {
+            if (i == src.id) {
+                continue;
+            }
+            distValue[i] = Mathf.Infinity;
+            previous[i] = -1;
+        }
+
+        while (frontier.Count != 0) {
+            yield return null;
+            node = frontier.Remove();
+            int nodeId = node.vertex.id;
+            if (ReferenceEquals(node.vertex, dst)) {
+                path = BuildPath(src.id, node.vertex.id, ref previous);
+                break;
+            }
+            edges = GetEdges(node.vertex);
+
+            foreach (Edge e in edges) {
+                int eId = e.vertex.id;
+                if (previous[eId] != -1) {
+                    continue;
+                }
+                float cost = distValue[nodeId] + e.cost;
+                cost += h(node.vertex, e.vertex);
+
+                if (cost < distValue[e.vertex.id]) {
+                    distValue[eId] = cost;
+                    previous[eId] = nodeId;
+                    frontier.Remove(e);
+                    child = new Edge(e.vertex, cost);
+                    frontier.Add(child);
+                }
+            }
+        }
+        isFinished = true;
+        yield break;
     }
 
     private List<Vertex> BuildPath(int srcId, int dstId, ref int[] prevList) {
