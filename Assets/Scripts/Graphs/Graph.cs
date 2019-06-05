@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ public class Graph : MonoBehaviour {
     protected List<List<Vertex>> neighbours;
     protected List<List<float>> costs;
     protected Dictionary<int, int> instIdToId;
+    public delegate float Heuristic(Vertex a, Vertex b);
 
     public virtual void Start() {
         Load();
@@ -191,6 +193,146 @@ public class Graph : MonoBehaviour {
         return new List<Vertex>();
     }
 
+    public List<Vertex> GetPathAStar(GameObject srcObj, GameObject dstObj, Heuristic h = null) {
+        if (srcObj == null || dstObj == null) {
+            return new List<Vertex>();
+        }
+        if (ReferenceEquals(h, null)) {
+            h = EuclidDist;
+        }
+
+        Vertex src = GetNearestVertex(srcObj.transform.position);
+        Vertex dst = GetNearestVertex(dstObj.transform.position);
+        BinaryHeap<Edge> frontier = new BinaryHeap<Edge>();
+        Edge[] edges;
+        Edge node, child;
+        int size = vertices.Count;
+        float[] distValue = new float[size];
+        int[] previous = new int[size];
+
+        //add the source node to the heap(working as a priority queue) and assign
+        //a distance value of infinity to all of them
+        node = new Edge(src, 0);
+        frontier.Add(node);
+        distValue[src.id] = 0;
+        previous[src.id] = src.id;
+        for (int i = 0; i < size; i++) {
+            if (i == src.id) {
+                continue;
+            }
+            distValue[i] = Mathf.Infinity;
+            previous[i] = -1;
+        }
+
+        //declare the loop for traversing the graph
+        while (frontier.Count != 0) {
+            //conditions for returning a path when necessary
+            node = frontier.Remove();
+            int nodeId = node.vertex.id;
+            if (ReferenceEquals(node.vertex, dst)) {
+                return BuildPath(src.id, node.vertex.id, ref previous);
+            }
+            //get the vertex's neighbours
+            edges = GetEdges(node.vertex);
+            //traverse the neighbours for computing the cost function
+            foreach (Edge e in edges) {
+                int eId = e.vertex.id;
+                if (previous[eId] != -1) {
+                    continue;
+                }
+                float cost = distValue[nodeId] + e.cost;
+                cost += h(node.vertex, e.vertex);
+
+                //expand the list of explored nodes and update the costs, if necessary
+                if (cost < distValue[e.vertex.id]) {
+                    distValue[eId] = cost;
+                    previous[eId] = nodeId;
+                    frontier.Remove();
+                    child = new Edge(e.vertex, cost);
+                    frontier.Add(child);
+                }
+            }
+        }
+        return new List<Vertex>();
+    }
+
+    public List<Vertex> GetPathIDAStar(GameObject srcObj, GameObject dstObj, Heuristic h = null) {
+        if (srcObj == null || dstObj == null) {
+            return new List<Vertex>();
+        }
+        if (ReferenceEquals(h, null)) {
+            h = EuclidDist;
+        }
+
+        List<Vertex> path = new List<Vertex>();
+        Vertex src = GetNearestVertex(srcObj.transform.position);
+        Vertex dst = GetNearestVertex(dstObj.transform.position);
+        Vertex goal = null;
+        bool[] visited = new bool[vertices.Count];
+        for (int i = 0; i < visited.Length; i++) {
+            visited[i] = false;
+        }
+        visited[src.id] = true;
+
+        //algorithm loop
+        float bound = h(src, dst);
+        while (bound < Mathf.Infinity) {
+            bound = RecursiveIDAStar(src, dst, bound, h, ref goal, ref visited);
+        }
+        if (ReferenceEquals(goal, null)) {
+            return path;
+        }
+        return BuildPath(goal);
+    }
+
+    private float RecursiveIDAStar(Vertex v,
+                                   Vertex dst,
+                                   float bound,
+                                   Heuristic h,
+                                   ref Vertex goal,
+                                   ref bool[] visited) {
+        //base case
+        if (ReferenceEquals(v, dst)) {
+            return Mathf.Infinity;
+        }
+        Edge[] edges = GetEdges(v);
+        if (edges.Length == 0) {
+            return Mathf.Infinity;
+        }
+
+        //recursive case
+        float fn = Mathf.Infinity;
+        foreach (Edge e in edges) {
+            int eId = e.vertex.id;
+            if (visited[eId]) {
+                continue;
+            }
+            visited[eId] = true;
+            e.vertex.prev = v;
+            float f = h(v, dst);
+            float b;
+            if (f <= bound) {
+                b = RecursiveIDAStar(e.vertex, dst, bound, h, ref goal, ref visited);
+                fn = Mathf.Min(f, b);
+            } else {
+                fn = Mathf.Min(fn, f);
+            }
+        }
+        return fn;
+    }
+
+    public float EuclidDist(Vertex a, Vertex b) {
+        Vector3 posA = a.transform.position;
+        Vector3 posB = b.transform.position;
+        return Vector3.Distance(posA, posB);
+    }
+
+    public float ManhattanDist(Vertex a, Vertex b) {
+        Vector3 posA = a.transform.position;
+        Vector3 posB = b.transform.position;
+        return Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y);
+    }
+
     private List<Vertex> BuildPath(int srcId, int dstId, ref int[] prevList) {
         List<Vertex> path = new List<Vertex>();
         int prev = dstId;
@@ -198,6 +340,15 @@ public class Graph : MonoBehaviour {
             path.Add(vertices[prev]);
             prev = prevList[prev];
         } while (prev != srcId);
+        return path;
+    }
+
+    private List<Vertex> BuildPath(Vertex v) {
+        List<Vertex> path = new List<Vertex>();
+        while (!ReferenceEquals(v, null)) {
+            path.Add(v);
+            v = v.prev;
+        }
         return path;
     }
 }
