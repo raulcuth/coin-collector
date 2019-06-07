@@ -43,9 +43,10 @@ public class Agent : MonoBehaviour {
         } else if (orientation > 360.0f) {
             orientation -= 360.0f;
         }
-        transform.Translate(displacement, Space.World);
+
         transform.rotation = new Quaternion();
         transform.Rotate(Vector3.up, orientation);
+        transform.Translate(displacement, Space.World);
     }
 
     public virtual void LateUpdate() {
