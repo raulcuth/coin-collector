@@ -4,6 +4,13 @@ using UnityEngine;
 using UnityEngine.AI;
 using NavMeshBuilder = UnityEngine.AI.NavMeshBuilder;
 
+//We take the size of the box around our agent, and the required difference 
+//between the box around the previous frame and the current one.If that 
+//difference is greater than the percentage we declared in sizeChange, 
+//the NavMeshBuilder takes the new position, disposes of the previous 
+//navigation mesh, and creates a new one
+//can be changed to get the direction of the target and then tell the agent 
+//to walk to the farthest point of the NavMesh in that direction
 public class NMRealTimeBuilder : MonoBehaviour {
     public Transform agent;
     public Vector3 boxSize = new Vector3(50f, 20f, 50f);
