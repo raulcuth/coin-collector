@@ -454,6 +454,86 @@ public class Graph : MonoBehaviour {
         return newPath;
     }
 
+    //main function for ambush
+    public void SetPathAmbush(GameObject dstObject, List<Lurker> lurkers) {
+        Vertex dst = GetNearestVertex(dstObject.transform.position);
+        foreach (Lurker l in lurkers) {
+            Vertex src = GetNearestVertex(l.transform.position);
+            l.path = AStarAmbush(src, dst, l, lurkers);
+        }
+    }
+
+    //the A*Ambush algorithm analyzes the path of every agent to the target and
+    //increases the cost of that route. When an agent computes the path with A*,
+    //it chooses a different route that the ones chosen by the other agents
+    //creating the sense of an ambush
+    private List<Vertex> AStarAmbush(Vertex src, Vertex dst, Lurker agent,
+                                     List<Lurker> lurkers, Heuristic h = null) {
+        int graphSize = vertices.Count;
+        float[] extra = new float[graphSize];
+        float[] costs = new float[graphSize];
+        //initialize regular cost and extra cost variables
+        for (int i = 0; i < graphSize; i++) {
+            extra[i] = 1f;
+            costs[i] = Mathf.Infinity;
+        }
+        //add the extra cost to each vertex that is contained in another agent's path
+        foreach (Lurker l in lurkers) {
+            foreach (Vertex v in l.path) {
+                extra[v.id] += 1f;
+            }
+        }
+
+        Edge[] successors;
+        int[] previous = new int[graphSize];
+        for (int i = 0; i < graphSize; i++) {
+            previous[i] = -1;
+        }
+        previous[src.id] = src.id;
+        float cost = 0;
+        Edge node = new Edge(src, 0);
+        BinaryHeap<Edge> frontier = new BinaryHeap<Edge>();
+
+        //A* main loop
+        frontier.Add(node);
+        while(frontier.Count != 0) {
+            if (frontier.Count == 0) {
+                return new List<Vertex>();
+            }
+            //validate that the goal has already been reached, 
+            //otherwise it's not worth computing the costs
+            node = frontier.Remove();
+            if (ReferenceEquals(node.vertex, dst)) {
+                return BuildPath(src.id, node.vertex.id, ref previous);
+            }
+            int nodeId = node.vertex.id;
+            if (node.cost > costs[nodeId]) {
+                continue;
+            }
+
+            //traverse the neighbours and check whether they have been visited
+            successors = GetEdges(node.vertex);
+            foreach(Edge e in successors) {
+                int eId = e.vertex.id;
+                if (previous[eId] != -1) {
+                    continue;
+                }
+                //if they have not been visited add them to the frontier
+                cost = e.cost;
+                cost += costs[dst.id];
+                cost += h(e.vertex, dst);
+                if (cost < costs[e.vertex.id]) {
+                    Edge child = new Edge(e.vertex, cost);
+                    costs[eId] = cost;
+                    previous[eId] = nodeId;
+                    frontier.Remove(e);
+                    frontier.Add(child);
+                }
+            }
+        }
+        return new List<Vertex>();
+    }
+
     private List<Vertex> BuildPath(int srcId, int dstId, ref int[] prevList) {
         List<Vertex> path = new List<Vertex>();
         int prev = dstId;
