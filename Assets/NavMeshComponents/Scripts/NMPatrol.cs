@@ -17,8 +17,8 @@ public class NMPatrol : MonoBehaviour {
 
     private void Update() {
         if (!agent.pathPending && agent.remainingDistance < pointDistance) {
-            currentPoint = (currentPoint + 1) % patrolPoints.Length;
-            GoToPoint(CalculateNextPoint());
+            currentPoint = CalculateNextPoint();
+            GoToPoint(currentPoint);
         }
     }
 
