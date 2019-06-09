@@ -1,6 +1,56 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
-public class Waypoint : MonoBehaviour {
+public class Waypoint : MonoBehaviour, IComparer {
+
+    public float value;
+    public List<Waypoint> neighbours;
+
+    public static bool CanMove(Waypoint a, Waypoint b) {
+        //implement behaviour for deciding whether an agent can move easily
+        //between 2 waypoints
+        return true;
+    }
+
+    public static void CondenseWaypoints(List<Waypoint> waypoints, float distanceWeight) {
+        distanceWeight += distanceWeight;
+        waypoints.Sort();
+        waypoints.Reverse();
+        List<Waypoint> neighbours;
+        foreach (Waypoint current in waypoints) {
+            //retrieve the waypoint neighbours, sort them, and start the loop for
+            //making them complete
+            neighbours = new List<Waypoint>(current.neighbours);
+            neighbours.Sort();
+            foreach (Waypoint target in neighbours) {
+                if (target.value > current.value) {
+                    break;
+                }
+                if (!CanMove(current, target)) {
+                    continue;
+                }
+                //compute the target's position
+                ComputeTargetPosition(distanceWeight, current, target);
+                //compute the target's overall value and decide whether 
+                //it's worth keeping
+                float deltaVal = current.value - target.value;
+                deltaVal *= deltaVal;
+                if (deltaVal < distanceWeight) {
+                    neighbours.Remove(target);
+                    waypoints.Remove(target);
+                }
+            }
+        }
+    }
+
+    private static void ComputeTargetPosition(float distanceWeight, Waypoint current, Waypoint target) {
+        Vector3 deltaPos = current.transform.position;
+        deltaPos -= target.transform.position;
+        deltaPos = Vector3.Cross(deltaPos, deltaPos);
+        deltaPos *= distanceWeight;
+    }
+
     public static float GetHeightQuality(Vector3 location, Vector3[] surroundings) {
         float maxQuality = 1f;
         float minQuality = -1f;
@@ -85,5 +135,17 @@ public class Waypoint : MonoBehaviour {
             theta = Mathf.Deg2Rad * deltaAngle;
         }
         return (float)(hits / valid);
+    }
+
+    public int Compare(object a, object b) {
+        Waypoint wa = (Waypoint)a;
+        Waypoint wb = (Waypoint)b;
+        if (wa.value == wb.value) {
+            return 0;
+        }
+        if (wa.value < wb.value) {
+            return -1;
+        }
+        return 1;
     }
 }
