@@ -126,4 +126,54 @@ public class InfluenceMap : Graph {
         }
         return closed;
     }
+
+    public static void ConvolveDriver(float[,] matrix,
+                                      ref float[,] source,
+                                      ref float[,] destination,
+                                      int iterations) {
+        float[,] map1;
+        float[,] map2;
+        //swap the maps regardless of whether iterations are odd or even
+        if (iterations % 2 == 0) {
+            map1 = source;
+            map2 = destination;
+        } else {
+            destination = source;
+            map1 = destination;
+            map2 = source;
+        }
+
+        //apply the convolve functions during the iterations and swap the maps
+        for (int i = 0; i < iterations; i++) {
+            Convolve(matrix, ref source, ref destination);
+            float[,] aux = map1;
+            map1 = map2;
+            map2 = aux;
+        }
+    }
+
+    public static void Convolve(float[,] matrix,
+                                ref float[,] source,
+                                ref float[,] destination) {
+        int matrixLength = matrix.GetLength(0);
+        int size = (matrixLength - 1) / 2;
+        int height = source.GetLength(0);
+        int width = source.GetLength(1);
+
+        //first loop for iterating over the destination and source grids
+        for (int i = 0; i < width - size; i++) {
+            for (int j = 0; j < height - size; j++) {
+                //second loop for iterating over the filter matrix
+                destination[i, j] = 0f;
+                for (int k = 0; k < matrixLength; k++) {
+                    for (int m = 0; m < matrixLength; m++) {
+                        int row = i + k - size;
+                        int col = j + m - size;
+                        float aux = source[row, col] * matrix[k, m];
+                        destination[i, j] += aux;
+                    }
+                }
+            }
+        }
+    }
 }
