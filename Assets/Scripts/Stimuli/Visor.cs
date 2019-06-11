@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+//It's important to have a collider component attached to the same game object using the script
 public class Visor : MonoBehaviour {
     public string tagWall = "Wall";
     public string tagTarget = "Enemy";
@@ -43,6 +44,7 @@ public class Visor : MonoBehaviour {
         }
         //TODO
         //target is visible, code the behaviour
+        Debug.Log("----> can see target: " + coll.name);
     }
 
 }
