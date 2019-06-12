@@ -6,6 +6,7 @@ public class SoundEmitter : MonoBehaviour {
     public float soundIntensity;
     public float soundAttenuation;
     public GameObject emitterObject;
+    public Dictionary<string, float> wallTypes;
     private Dictionary<int, SoundReceiver> receiverDictionary;
 
     private void Start() {
@@ -51,6 +52,23 @@ public class SoundEmitter : MonoBehaviour {
             }
             sr.Receive(intensity, emitterPos);
         }
+    }
+
+    public float GetWallAttenuation(Vector3 emitterPos, Vector3 receiverPos) {
+        float attenuation = 0f;
+        Vector3 direction = receiverPos - emitterPos;
+        float distance = direction.magnitude;
+        direction.Normalize();
+        Ray ray = new Ray(emitterPos, direction);
+        RaycastHit[] hits = Physics.RaycastAll(ray, distance);
+        for (int i = 0; i < hits.Length; i++) {
+            GameObject obj = hits[i].collider.gameObject;
+            string tag = obj.tag;
+            if (wallTypes.ContainsKey(tag)) {
+                attenuation += wallTypes[tag];
+            }
+        }
+        return attenuation;
     }
 
 }
