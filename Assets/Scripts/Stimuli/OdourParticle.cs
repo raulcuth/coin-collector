@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class OdourParticle : MonoBehaviour {
     public float timespan;
+    public int parent;
     private float timer;
 
     private void Start() {
