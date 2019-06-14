@@ -41,4 +41,42 @@ public class BoardAI {
         }
         return bestScore;
     }
+
+    public static float Negamax(Board board,
+                                int maxDepth,
+                                int currentDepth,
+                                ref Move bestMove) {
+        if (board.IsGameOver() || currentDepth == maxDepth) {
+            return board.Evaluate();
+        }
+        bestMove = null;
+        float bestScore = Mathf.NegativeInfinity;
+        //loop through all the available moves and return the best score
+        foreach (Move m in board.GetMoves()) {
+            //create a new game state from the current move
+            Board newBoard = board.MakeMove(m);
+            float recursedScore;
+            Move currentMove = null;
+            recursedScore = Negamax(newBoard, maxDepth, currentDepth + 1, ref currentMove);
+
+            float currentScore = -recursedScore;
+            if (currentScore > bestScore) {
+                bestScore = currentScore;
+                bestMove = m;
+            }
+        }
+        return bestScore;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 }
