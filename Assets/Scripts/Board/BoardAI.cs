@@ -67,6 +67,44 @@ public class BoardAI {
         }
         return bestScore;
     }
+    //The alpha value is the lowest score a player can achieve, 
+    //thus avoiding considering any move where the opponent has the opportunity
+    //to lessen it. Similarly, the beta value is the upper limit, and no matter 
+    //how tempting the new option is, the algorithm assumes that the opponent 
+    //won't provide the opportunity to take it
+    public static float ABNegamax(Board board,
+                                  int player,
+                                  int maxDepth,
+                                  int currentDepth,
+                                  ref Move bestMove,
+                                  float alpha,
+                                  float beta) {
+        if (board.IsGameOver() || currentDepth == maxDepth) {
+            return board.Evaluate(player);
+        }
+        bestMove = null;
+        float bestScore = Mathf.NegativeInfinity;
+        //loop through every available move and return the best score
+        foreach (Move m in board.GetMoves()) {
+            Board newBoard = board.MakeMove(m);
+            float recursedScore;
+            Move currentMove = null;
+            int cd = currentDepth + 1;
+            float max = Mathf.Max(alpha, bestScore);
+            recursedScore = ABNegamax(newBoard, player, maxDepth, cd, ref currentMove, -beta, max);
+
+            //set the current score and update the best score and move if necessary
+            float currentScore = -recursedScore;
+            if (currentScore > bestScore) {
+                bestScore = currentScore;
+                bestMove = m;
+                if (bestScore >= beta) {
+                    return bestScore;
+                }
+            }
+        }
+        return bestScore;
+    }
 
 
 
