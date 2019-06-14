@@ -30,6 +30,7 @@ public class AgentAwared : MonoBehaviour {
         yield break;
     }
 
+    //defined what an agent does when it is in charge of giving orders
     public virtual IEnumerator Lead() {
         //TODO
         //develop custom implementation
