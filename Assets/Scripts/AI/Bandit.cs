@@ -116,4 +116,13 @@ public class Bandit : MonoBehaviour {
         }
         return utility;
     }
+
+    //handle the overall actions of the game and inform the algorithm of the 
+    //actions from the opponent, in this case, the player's actions
+    public void TellOpponentAction(RPSAction action) {
+        totalActions++;
+        float utility = GetUtility(lastAction, action);
+        score[(int)lastAction] += utility;
+        count[(int)lastAction] += 1;
+    }
 }
