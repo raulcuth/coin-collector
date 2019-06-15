@@ -106,7 +106,53 @@ public class BoardAI {
         return bestScore;
     }
 
+    //this algorithm works by examining the first move of each node.
+    //the following moves are examined using a scout pass with a narrower window
+    //based on the first move. If the pass fails, it is repeated using a full-width
+    //window. As a result a large number og branches are pruned and failures are avoided
+    public static float ABNegascout(Board board,
+                                    int player,
+                                    int maxDepth,
+                                    int currentDepth,
+                                    ref Move bestMove,
+                                    float alpha,
+                                    float beta) {
+        if (board.IsGameOver() || currentDepth == maxDepth) {
+            return board.Evaluate(player);
+        }
+        bestMove = null;
+        float bestScore = Mathf.NegativeInfinity;
+        float adaptiveBeta = beta;
 
+        foreach (Move m in board.GetMoves()) {
+            Board newGameStateBoard = board.MakeMove(m);
+            Move currentMove = null;
+            float recursedScore;
+            int depth = currentDepth + 1;
+            float max = Mathf.Max(alpha, bestScore);
+
+            recursedScore = ABNegamax(newGameStateBoard, player, maxDepth, depth, ref currentMove, -adaptiveBeta, max);
+
+            float currentScore = -recursedScore;
+            if (currentScore > bestScore) {
+                //validate for pruning
+                if (adaptiveBeta.Equals(beta) || currentDepth >= maxDepth - 2) {
+                    bestScore = currentScore;
+                    bestMove = currentMove;
+                } else {
+                    float negativeBest =
+                        ABNegascout(newGameStateBoard, player, maxDepth, depth, ref bestMove, -beta, -currentScore);
+                    bestScore = -negativeBest;
+                }
+
+                if (bestScore >= beta) {
+                    return bestScore;
+                }
+                adaptiveBeta = Mathf.Max(alpha, bestScore) + 1f;
+            }
+        }
+        return bestScore;
+    }
 
 
 
