@@ -11,6 +11,28 @@ public class Bandit : MonoBehaviour {
     RPSAction lastAction;
     int lastStrategy;
 
+    //regret decision making
+    float initialRegret = 10f;
+    float[] regret;
+    float[] chance;
+    RPSAction lastOpponentAction;
+    RPSAction[] lastActionRM;
+
+    //initialize the regret decision making
+    public void InitRegretMatching() {
+        if (init) {
+            return;
+        }
+        numActions = System.Enum.GetNames(typeof(RPSAction)).Length;
+        regret = new float[numActions];
+        chance = new float[numActions];
+        for (int i = 0; i < numActions; i++) {
+            regret[i] = initialRegret;
+            chance[i] = 0f;
+        }
+        init = true;
+    }
+
     //initialize the UCB1 algorithm
     public void InitUCB1() {
         if (init) {
@@ -124,5 +146,56 @@ public class Bandit : MonoBehaviour {
         float utility = GetUtility(lastAction, action);
         score[(int)lastAction] += utility;
         count[(int)lastAction] += 1;
+    }
+
+    //computes the next action to be taken
+    public RPSAction GetNextActionRM() {
+        float sum = 0f;
+        float prob = 0f;
+        InitRegretMatching();
+        //explore all available options and hold the response to be taken
+        for (int i = 0; i < numActions; i++) {
+            lastActionRM[i] = GetActionForStrategy((RPSAction)i);
+        }
+        //sum the overall regret
+        for (int i = 0; i < numActions; i++) {
+            if (regret[i] > 0f) {
+                sum += regret[i];
+            }
+        }
+        //return a random action if the sum is less than or equal to 0
+        if (sum <= 0f) {
+            lastAction = (RPSAction)Random.Range(0, numActions);
+            return lastAction;
+        }
+        //explore the set of actions and sum the chance of regretting them
+        for (int i = 0; i < numActions; i++) {
+            chance[i] = 0f;
+            if (regret[i] > 0f) {
+                chance[i] = regret[i];
+            }
+            if (i > 0) {
+                chance[i] += chance[i - 1];
+            }
+        }
+        //computes a random probability and compare that to the chance of taking
+        //the actions. Returns the first one to be greater than the probability computed
+        prob = Random.value;
+        for (int i = 0; i < numActions; i++) {
+            if (prob < chance[i]) {
+                lastStrategy = i;
+                lastAction = lastActionRM[i];
+                return lastAction;
+            }
+        }
+        return (RPSAction)(numActions - 1);
+    }
+
+    public void TellOpponentActionRM(RPSAction action) {
+        lastOpponentAction = action;
+        for (int i = 0; i < numActions; i++) {
+            regret[i] += GetUtility((RPSAction)lastActionRM[i], (RPSAction)action);
+            regret[i] -= GetUtility((RPSAction)lastAction, (RPSAction)action);
+        }
     }
 }
