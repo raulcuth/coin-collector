@@ -48,4 +48,12 @@ public class NGramPredictor<T> {
         }
         return bestAction;
     }
+
+    public int GetActionsNum(ref T[] actions) {
+        string key = ArrayToStringKey(ref actions);
+        if (!data.ContainsKey(key)) {
+            return 0;
+        }
+        return data[key].total;
+    }
 }
